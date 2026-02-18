@@ -1,0 +1,5 @@
+{
+  "name": "Ramadan Muraqabah (مراقبه رمضان)",
+  "description": "A comprehensive spiritual tracking tool for the holy month of Ramadan, featuring daily task checklists, historical events, and links to religious resources.",
+  "requestFramePermissions": ["notifications"]
+}
