@@ -16,16 +16,16 @@ export const TASKS: Task[] = [
   { id: 2, title: 'دعاهای بعد از نماز', url: 'https://erfan.ir/mafatih109', icon: '🕌' },
   { id: 3, title: 'صدقه روزانه', url: 'https://payping.ir/d/jGLa', icon: '🪙' },
   { id: 4, title: 'دعای افطار و امام زمان', url: 'https://erfan.ir/mafatih1000', icon: '🤲' },
-  { id: 5, title: 'کثرت صلوات', description: '۱۰۰ صلوات', icon: '📿' },
-  { id: 6, title: 'دعای ابوحمزه ثمالی', url: 'https://erfan.ir/mafatih116/', icon: '⚖️' },
-  { id: 7, title: 'دعای افتتاح', url: 'https://erfan.ir/mafatih111/', icon: '📜' },
-  { id: 8, title: 'نماز شب', url: 'https://erfan.ir/mafatih387/', icon: '🌙' },
-  { id: 9, title: 'سوره قدر (افطار و سحر)', url: 'https://tanzil.net/#97:1', icon: '✨' },
-  { id: 10, title: 'مواسات و همدلی', description: 'افطاری دادن و کمک به مستضعفین', icon: '🤝' },
-  { id: 13, title: 'سوره دخان', url: 'https://tanzil.net/#44:1', icon: '🗞️' },
-  { id: 11, title: 'غسل شب‌های فرد', description: 'غسل مستحبی شب‌های فرد و دهه‌ی آخر ماه رمضان', icon: '💧' },
-  { id: 12, title: 'نماز ماه رمضان', description: 'دو رکعت نماز با ۳ سوره توحید', icon: '🛐' },
-  { id: 14, title: 'اعمال صبح و شام', url: 'https://erfan.ir/mafatih120/', icon: '☀️' },
+  { id: 5, title: 'دعای ابوحمزه ثمالی', url: 'https://erfan.ir/mafatih116/', icon: '⚖️' },
+  { id: 6, title: 'دعای افتتاح', url: 'https://erfan.ir/mafatih111/', icon: '📜' },
+  { id: 7, title: 'کثرت صلوات', description: '۱۰۰ صلوات', icon: '📿' },
+  // { id: 8, title: 'نماز شب', url: 'https://erfan.ir/mafatih387/', icon: '🌙' },
+  // { id: 9, title: 'سوره قدر (افطار و سحر)', url: 'https://tanzil.net/#97:1', icon: '✨' },
+  // { id: 10, title: 'مواسات و همدلی', description: 'افطاری دادن و کمک به مستضعفین', icon: '🤝' },
+  // { id: 13, title: 'سوره دخان', url: 'https://tanzil.net/#44:1', icon: '🗞️' },
+  // { id: 11, title: 'غسل شب‌های فرد', description: 'غسل مستحبی شب‌های فرد و دهه‌ی آخر ماه رمضان', icon: '💧' },
+  // { id: 12, title: 'نماز ماه رمضان', description: 'دو رکعت نماز با ۳ سوره توحید', icon: '🛐' },
+  // { id: 14, title: 'اعمال صبح و شام', url: 'https://erfan.ir/mafatih120/', icon: '☀️' },
 ];
 
 export const RAMADAN_DAYS: RamadanDay[] = [

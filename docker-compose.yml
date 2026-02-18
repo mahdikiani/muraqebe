@@ -7,12 +7,15 @@ services:
       - NODE_ENV=production
     networks:
       - traefik-net
+    # تست مستقیم بدون Traefik: بعد از up با http://localhost:8080 چک کن
+    # ports:
+    #   - "8080:80"
     labels:
       - "traefik.enable=true"
       - "traefik.http.routers.${PROJECT_NAME}.entrypoints=web"
-      - "traefik.http.routers.${PROJECT_NAME}.rule=Host(`${DOMAIN}`)"
+      - "traefik.http.routers.${PROJECT_NAME}.rule=${DOMAINS}"
       - "traefik.http.routers.${PROJECT_NAME}-secure.entrypoints=websecure"
-      - "traefik.http.routers.${PROJECT_NAME}-secure.rule=Host(`${DOMAIN}`)"
+      - "traefik.http.routers.${PROJECT_NAME}-secure.rule=${DOMAINS}"
       - "traefik.http.routers.${PROJECT_NAME}-secure.tls=true"
       - "traefik.http.routers.${PROJECT_NAME}-secure.tls.certresolver=letsencrypt"
       - "traefik.http.services.${PROJECT_NAME}.loadbalancer.server.port=80"
