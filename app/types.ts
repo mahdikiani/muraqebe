@@ -29,3 +29,6 @@ export interface UserSettings {
   remindersEnabled: boolean;
   notificationTime: string;
 }
+
+/** User-created daily tasks; id must be >= CUSTOM_TASK_ID_START (see constants). */
+export type CustomTask = Pick<Task, 'id' | 'title' | 'description' | 'icon' | 'url'> & { id: number };

@@ -1,5 +1,8 @@
 import { Task, RamadanDay } from './types';
 
+/** Minimum id for user-created daily tasks (avoids clash with built-in task ids). */
+export const CUSTOM_TASK_ID_START = 1000;
+
 const MAFATIH_SUFFIX = 'کلیات-مفاتیح-الجنان-با-ترجمه-استاد-حسین-انصاریان';
 const DAILY_DUA_SLUGS = [
   'اول', 'دوم', 'سوم', 'چهارم', 'پنجم', 'ششم', 'هفتم', 'هشتم', 'نهم', 'دهم',
