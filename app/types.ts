@@ -28,7 +28,36 @@ export interface UserProfile {
 export interface UserSettings {
   remindersEnabled: boolean;
   notificationTime: string;
+  city: string;
+}
+
+export interface City {
+  id: string;
+  name: string;
+}
+
+export interface PrayerTimes {
+  imsak: string;
+  fajr: string;
+  sunrise: string;
+  noon: string;
+  sunset: string;
+  maghrib: string;
+  midnight: string;
 }
 
 /** User-created daily tasks; id must be >= CUSTOM_TASK_ID_START (see constants). */
 export type CustomTask = Pick<Task, 'id' | 'title' | 'description' | 'icon' | 'url'> & { id: number };
+
+export interface Session {
+  id: number;
+  title: string;
+  description: string;
+  teachers: string;
+  time: string;
+  location: string;
+  contact: string;
+  url?: string;
+  icon?: string;
+  image?: string;
+}

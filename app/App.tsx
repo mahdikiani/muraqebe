@@ -1,12 +1,15 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
-import { TASKS, RAMADAN_DAYS, CUSTOM_TASK_ID_START } from './constants';
-import { UserProgress, UserSettings, UserProfile, CustomTask } from './types';
+import { TASKS, RAMADAN_DAYS, CUSTOM_TASK_ID_START, SESSIONS, CITIES } from '@/constants';
+import { UserProgress, UserSettings, UserProfile, CustomTask } from '@/types';
+import TaskCard from '@/components/TaskCard';
+import Calendar from '@/components/Calendar';
+import PrayerTimes from '@/components/PrayerTimes';
+import { getTodayRamadanDay, getRamadanStatus, getTodayWeekdayPersian, getTodaySolarDateString, getDaysUntilRamadan } from '@/lib/dateUtils';
 import {
   CheckCircleIcon,
   CalendarIcon,
   Cog6ToothIcon,
   ChartBarIcon,
-  ArrowRightIcon,
   BellIcon,
   ExclamationCircleIcon,
   UserIcon,
@@ -17,14 +20,14 @@ import {
   ChevronRightIcon,
   PlusCircleIcon,
   TrashIcon,
+  BookOpenIcon,
+  MapPinIcon,
 } from '@heroicons/react/24/outline';
-import { CheckCircleIcon as CheckCircleSolid } from '@heroicons/react/24/solid';
-import { getTodayRamadanDay } from './dateUtils';
 
 const STORAGE_KEY = 'ramadan_muraqabah_v3';
 
 const App: React.FC = () => {
-  const [activeTab, setActiveTab] = useState<'today' | 'calendar' | 'stats' | 'settings'>('today');
+  const [activeTab, setActiveTab] = useState<'today' | 'calendar' | 'stats' | 'settings' | 'courses'>('today');
   const [selectedDay, setSelectedDay] = useState<number>(() => getTodayRamadanDay() ?? 1);
   const [userProfile, setUserProfile] = useState<UserProfile>({ name: 'کاربر گرامی', joinedAt: new Date().toISOString() });
   const [showIntro, setShowIntro] = useState(false);
@@ -32,6 +35,7 @@ const App: React.FC = () => {
   const [settings, setSettings] = useState<UserSettings>({
     remindersEnabled: false,
     notificationTime: '18:00',
+    city: 'tehran',
   });
   const [showNamePopup, setShowNamePopup] = useState(false);
   const [nameDraft, setNameDraft] = useState('');
@@ -42,11 +46,10 @@ const App: React.FC = () => {
   const [newCustomUrl, setNewCustomUrl] = useState('');
   const [newCustomIcon, setNewCustomIcon] = useState('📌');
   const [hiddenTaskIds, setHiddenTaskIds] = useState<number[]>([]);
-  const [swipeTaskId, setSwipeTaskId] = useState<number | null>(null);
-  const [swipeOffset, setSwipeOffset] = useState(0);
-  const touchStartX = useRef(0);
+  const isFirstSave = useRef(true);
 
   const todayRamadanDay = getTodayRamadanDay();
+  const ramadanStatus = getRamadanStatus();
 
   useEffect(() => {
     if (showNamePopup) setNameDraft(userProfile.name);
@@ -58,7 +61,7 @@ const App: React.FC = () => {
       try {
         const parsed = JSON.parse(savedData);
         if (parsed.progress) setProgress(parsed.progress);
-        if (parsed.settings) setSettings(parsed.settings);
+        if (parsed.settings) setSettings({ ...parsed.settings, city: parsed.settings.city || 'tehran' });
         if (parsed.userProfile) setUserProfile(parsed.userProfile);
         if (Array.isArray(parsed.customTasks)) setCustomTasks(parsed.customTasks);
         if (Array.isArray(parsed.hiddenTaskIds)) setHiddenTaskIds(parsed.hiddenTaskIds);
@@ -72,6 +75,10 @@ const App: React.FC = () => {
   }, []);
 
   useEffect(() => {
+    if (isFirstSave.current) {
+      isFirstSave.current = false;
+      return;
+    }
     localStorage.setItem(STORAGE_KEY, JSON.stringify({ progress, settings, userProfile, customTasks, hiddenTaskIds }));
   }, [progress, settings, userProfile, customTasks, hiddenTaskIds]);
 
@@ -112,8 +119,6 @@ const App: React.FC = () => {
       }
       return next;
     });
-    setSwipeTaskId(null);
-    setSwipeOffset(0);
   };
 
   const unhideBuiltInTask = (id: number) => {
@@ -135,7 +140,6 @@ const App: React.FC = () => {
   };
 
   const removeCustomTask = (id: number) => {
-    if (!confirm('این مورد از لیست شخصی حذف شود؟ (وضعیت انجام در روزها پاک می‌شود)')) return;
     setCustomTasks(prev => prev.filter(t => t.id !== id));
     setProgress(prev => {
       const next = { ...prev };
@@ -162,6 +166,23 @@ const App: React.FC = () => {
 
   const renderToday = () => (
     <div className="animate-fadeIn">
+      {ramadanStatus !== 'during' && (
+        <div className="mx-4 mt-4 mb-2 p-4 rounded-2xl bg-amber-50 border border-amber-200 flex items-start gap-3">
+          <InformationCircleIcon className="w-6 h-6 text-amber-600 shrink-0 mt-0.5" />
+          <div>
+            <p className="font-bold text-amber-900">
+              {ramadanStatus === 'before'
+                ? 'ماه رمضان هنوز شروع نشده'
+                : 'ماه رمضان به پایان رسیده'}
+            </p>
+            <p className="text-sm text-amber-800 mt-1">
+              {ramadanStatus === 'before'
+                ? 'شروع ماه مبارک: ۳۰ بهمن. در حال حاضر می‌توانید روزها را مرور کنید.'
+                : 'می‌توانید کارنامه و تقویم را همچنان مشاهده کنید.'}
+            </p>
+          </div>
+        </div>
+      )}
       <div className="bg-emerald-600 text-white p-6 rounded-b-[2.5rem] shadow-xl mb-6 relative overflow-hidden">
         <div className="absolute -top-12 -left-12 w-48 h-48 bg-white/10 rounded-full blur-3xl" />
         <div className="absolute -bottom-8 -right-8 w-32 h-32 bg-amber-400/10 rounded-full blur-2xl" />
@@ -179,7 +200,7 @@ const App: React.FC = () => {
               <span className="font-bold text-emerald-50">{userProfile.name}</span>
             </button>
             <div className="bg-white/20 px-3 py-1 rounded-full backdrop-blur-md text-xs border border-white/20">
-              {currentDayData?.solarDate}
+              {ramadanStatus === 'during' ? currentDayData?.solarDate : getTodaySolarDateString()}
             </div>
           </div>
           <div className="flex justify-between items-end gap-3">
@@ -204,18 +225,41 @@ const App: React.FC = () => {
               </button>
             </div>
             <div className="min-w-0 flex-1">
-              <h1 className="text-3xl font-black flex items-center gap-2 flex-wrap">
-                روز {selectedDay} رمضان
-                {selectedDay === 1 && <SparklesIcon className="w-6 h-6 text-amber-300" />}
-              </h1>
-              <p className="text-emerald-100 mt-1">{currentDayData?.weekday}</p>
-              {todayRamadanDay == null && (
-                <p className="text-amber-200/90 text-sm mt-1 font-medium">آمادگی برای ماه رمضان</p>
+              {ramadanStatus === 'during' ? (
+                <>
+                  <h1 className="text-3xl font-black flex items-center gap-2 flex-wrap">
+                    روز {selectedDay} رمضان
+                    {selectedDay === 1 && <SparklesIcon className="w-6 h-6 text-amber-300" />}
+                  </h1>
+                  <p className="text-emerald-100 mt-1">{currentDayData?.weekday}</p>
+                </>
+              ) : ramadanStatus === 'before' && selectedDay === 1 ? (
+                <>
+                  <h1 className="text-3xl font-black flex items-center gap-2 flex-wrap">
+                    {getDaysUntilRamadan()} روز مانده تا ماه رمضان
+                  </h1>
+                  <p className="text-emerald-100 mt-1">{getTodayWeekdayPersian()}</p>
+                </>
+              ) : (
+                <>
+                  <h1 className="text-3xl font-black flex items-center gap-2 flex-wrap">
+                    <span className="text-emerald-200/90 text-xl">پیش‌نمایش: </span>
+                    روز {selectedDay} رمضان
+                    {selectedDay === 1 && <SparklesIcon className="w-6 h-6 text-amber-300" />}
+                  </h1>
+                  <p className="text-emerald-100 mt-1">{currentDayData?.weekday ?? getTodayWeekdayPersian()}</p>
+                </>
               )}
             </div>
             <div className="bg-white text-emerald-600 w-20 h-20 rounded-2xl flex flex-row items-center justify-center gap-0.5 shadow-lg ring-4 ring-emerald-500/30 shrink-0">
-              <span className="text-2xl font-black leading-none">{progressPercent}</span>
-              <span className="text-sm font-bold">%</span>
+              {ramadanStatus === 'during' ? (
+                <>
+                  <span className="text-2xl font-black leading-none">{progressPercent}</span>
+                  <span className="text-sm font-bold">%</span>
+                </>
+              ) : (
+                <span className="text-lg font-bold">—</span>
+              )}
             </div>
           </div>
         </div>
@@ -226,90 +270,25 @@ const App: React.FC = () => {
           </div>
         )}
       </div>
-      <div className="px-4 pb-24 space-y-4">
+      <div className="px-4 pb-24 space-y-[10px]">
         {allTasks.map(task => {
           const isCustom = task.id >= CUSTOM_TASK_ID_START;
           const isCompleted = (progress[selectedDay] as number[] || []).includes(task.id);
           let taskUrl = 'urlByDay' in task && task.urlByDay ? task.urlByDay[selectedDay - 1] : (task as { url?: string }).url;
           if (task.id === 1) taskUrl = `https://tanzil.net/#juz-${selectedDay}`;
-          const isSwiping = swipeTaskId === task.id;
-          const dragOffset = isSwiping ? swipeOffset : 0;
-          const onSwipeEnd = () => {
-            if (dragOffset < -80) {
-              if (isCustom) {
-                if (confirm('این مورد از لیست شخصی حذف شود؟')) removeCustomTask(task.id);
-              } else {
-                hideBuiltInTask(task.id);
-              }
-            }
-            setSwipeTaskId(null);
-            setSwipeOffset(0);
-          };
           return (
-            <div key={task.id} className="rounded-3xl overflow-hidden relative" dir="ltr">
-              <div
-                className="absolute inset-y-0 right-0 w-24 flex items-center justify-center bg-red-500 text-white text-xs font-bold z-0"
-                aria-hidden
-              >
-                {isCustom ? 'حذف' : 'پنهان'}
-              </div>
-              <div
-                className="relative z-10 transition-transform"
-                style={{ transform: `translateX(${dragOffset}px)` }}
-                onTouchStart={(e) => {
-                  touchStartX.current = e.touches[0].clientX;
-                  setSwipeTaskId(task.id);
-                  setSwipeOffset(0);
-                }}
-                onTouchMove={(e) => {
-                  if (swipeTaskId !== task.id) return;
-                  const dx = e.touches[0].clientX - touchStartX.current;
-                  setSwipeOffset(Math.max(-120, Math.min(0, dx)));
-                }}
-                onTouchEnd={onSwipeEnd}
-                onTouchCancel={onSwipeEnd}
-              >
-                <div
-                  dir="rtl"
-                  onClick={() => toggleTask(selectedDay, task.id)}
-                  className={`flex items-center gap-4 p-5 rounded-3xl border-2 cursor-pointer ${isCompleted ? 'bg-emerald-50 border-emerald-200 shadow-sm' : 'bg-white border-slate-100 shadow-sm active:scale-98'}`}
-                >
-                  <div className={`text-2xl w-12 h-12 flex items-center justify-center rounded-2xl shrink-0 ${isCompleted ? 'bg-emerald-100' : 'bg-slate-50'}`}>
-                    {task.icon ?? '📌'}
-                  </div>
-                  <div className="flex-1">
-                    <h3 className={`font-bold text-base ${isCompleted ? 'text-emerald-900' : 'text-slate-800'}`}>{task.title}</h3>
-                    {task.description && <p className="text-xs text-slate-500 mt-1">{task.description}</p>}
-                  </div>
-                  {taskUrl && (
-                    <a
-                      href={taskUrl}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      onClick={(e) => e.stopPropagation()}
-                      className="w-10 h-10 flex items-center justify-center text-emerald-600 hover:bg-emerald-100 rounded-full transition-colors border border-emerald-100 shadow-sm"
-                      title="مشاهده منبع"
-                    >
-                      <ArrowRightIcon className="w-5 h-5" />
-                    </a>
-                  )}
-                  {isCustom && (
-                    <button
-                      type="button"
-                      onClick={(e) => { e.stopPropagation(); removeCustomTask(task.id); }}
-                      className="w-10 h-10 flex items-center justify-center text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-full transition-colors"
-                      title="حذف از لیست شخصی"
-                      aria-label="حذف"
-                    >
-                      <TrashIcon className="w-5 h-5" />
-                    </button>
-                  )}
-                  <div className="mr-2">
-                    {isCompleted ? <CheckCircleSolid className="w-8 h-8 text-emerald-500" /> : <div className="w-8 h-8 rounded-full border-2 border-slate-200" />}
-                  </div>
-                </div>
-              </div>
-            </div>
+            <TaskCard
+              key={task.id}
+              task={task}
+              taskUrl={taskUrl}
+              isCompleted={isCompleted}
+              isCustom={isCustom}
+              onToggle={() => toggleTask(selectedDay, task.id)}
+              onDelete={() => {
+                if (isCustom) removeCustomTask(task.id);
+                else hideBuiltInTask(task.id);
+              }}
+            />
           );
         })}
         <button
@@ -322,44 +301,6 @@ const App: React.FC = () => {
           </div>
           <span className="font-bold text-sm">افزودن مورد روزانهٔ شخصی</span>
         </button>
-      </div>
-    </div>
-  );
-
-  const renderCalendar = () => (
-    <div className="p-4 pb-24 animate-fadeIn">
-      <div className="flex justify-between items-center mb-6">
-        <h2 className="text-xl font-black text-slate-800 flex items-center gap-2">
-          <CalendarIcon className="w-6 h-6 text-emerald-600" />
-          تقویم مراقبه
-        </h2>
-        <button onClick={() => setSelectedDay(1)} className="text-xs font-bold text-emerald-600 bg-emerald-50 px-3 py-1.5 rounded-full">
-          امروز
-        </button>
-      </div>
-      <div className="grid grid-cols-4 gap-3">
-        {RAMADAN_DAYS.map(day => {
-          const dayProg = (progress[day.dayIndex] as number[] || []).length;
-          const isDone = dayProg === allTasks.length;
-          const isSelected = selectedDay === day.dayIndex;
-          return (
-            <button
-              key={day.dayIndex}
-              onClick={() => { setSelectedDay(day.dayIndex); setActiveTab('today'); }}
-              className={`flex flex-col items-center justify-center aspect-square rounded-[1.5rem] transition-all relative ${isSelected ? 'bg-emerald-600 text-white shadow-lg shadow-emerald-200 ring-4 ring-emerald-100'
-                : dayProg > 0 ? 'bg-emerald-50 text-emerald-800 border border-emerald-100' : 'bg-white border border-slate-100 text-slate-400'
-                }`}
-            >
-              <span className="text-lg font-black">{day.dayIndex}</span>
-              <span className="text-[10px] font-bold opacity-60">{day.weekday.slice(0, 3)}</span>
-              {dayProg > 0 && (
-                <div className="absolute top-2 right-2">
-                  <div className={`w-2 h-2 rounded-full ${isDone ? 'bg-emerald-400' : 'bg-amber-400'}`} />
-                </div>
-              )}
-            </button>
-          );
-        })}
       </div>
     </div>
   );
@@ -390,15 +331,18 @@ const App: React.FC = () => {
             شما تا کنون <span className="text-emerald-600 font-bold">{totalDone}</span> عمل عبادی را ثبت کرده‌اید.
           </p>
         </div>
-        <div className="space-y-4">
+        <div className="space-y-[16px]">
           <h4 className="font-black text-slate-800 px-2 text-sm">استمرار در اعمال</h4>
-          {TASKS.slice(0, 6).map(t => {
+          {allTasks.map(t => {
             const count = (Object.values(progress) as number[][]).filter(p => p.includes(t.id)).length;
             const perc = (count / 30) * 100;
             return (
               <div key={t.id} className="bg-white p-5 rounded-3xl border border-slate-100 shadow-sm">
                 <div className="flex justify-between text-sm mb-3">
-                  <span className="font-bold text-slate-700">{t.title}</span>
+                  <span className="font-bold text-slate-700 flex items-center gap-2">
+                    <span>{t.icon}</span>
+                    {t.title}
+                  </span>
                   <span className="text-emerald-600 font-bold">{count} روز</span>
                 </div>
                 <div className="h-2.5 bg-slate-50 rounded-full overflow-hidden">
@@ -418,7 +362,7 @@ const App: React.FC = () => {
         <Cog6ToothIcon className="w-6 h-6 text-emerald-600" />
         تنظیمات
       </h2>
-      <div className="space-y-4">
+      <div className="space-y-[16px]">
         <div className="bg-white p-6 rounded-[2rem] shadow-sm border border-slate-100">
           <h4 className="text-xs font-bold text-slate-400 mb-4 mr-2">پروفایل کاربر</h4>
           <div className="flex items-center gap-4">
@@ -432,6 +376,23 @@ const App: React.FC = () => {
               className="flex-1 bg-slate-50 border-none rounded-xl p-3 font-bold text-slate-800 focus:ring-2 focus:ring-emerald-200"
               placeholder="نام شما"
             />
+          </div>
+        </div>
+        <div className="bg-white p-6 rounded-[2rem] shadow-sm border border-slate-100">
+          <h4 className="text-xs font-bold text-slate-400 mb-4 mr-2">شهر</h4>
+          <div className="flex items-center gap-4">
+            <div className="w-12 h-12 bg-amber-50 text-amber-500 rounded-2xl flex items-center justify-center">
+              <MapPinIcon className="w-7 h-7" />
+            </div>
+            <select
+              value={settings.city}
+              onChange={(e) => setSettings(s => ({ ...s, city: e.target.value }))}
+              className="flex-1 bg-slate-50 border-none rounded-xl p-3 font-bold text-slate-800 focus:ring-2 focus:ring-emerald-200"
+            >
+              {CITIES.map((city) => (
+                <option key={city.id} value={city.id}>{city.name}</option>
+              ))}
+            </select>
           </div>
         </div>
         <div className="bg-white p-6 rounded-[2rem] shadow-sm border border-slate-100">
@@ -537,9 +498,81 @@ const App: React.FC = () => {
     <div className="max-w-md mx-auto min-h-screen bg-slate-50 relative overflow-hidden flex flex-col">
       <main className="flex-1 overflow-y-auto">
         {activeTab === 'today' && renderToday()}
-        {activeTab === 'calendar' && renderCalendar()}
+        {activeTab === 'calendar' && (
+          <Calendar
+            progress={progress}
+            totalTasks={allTasks.length}
+            selectedDay={selectedDay}
+            todayRamadanDay={todayRamadanDay}
+            onSelectDay={(dayIndex) => {
+              setSelectedDay(dayIndex);
+              setActiveTab('today');
+            }}
+            onGoToToday={() => setSelectedDay(todayRamadanDay ?? 1)}
+          />
+        )}
         {activeTab === 'stats' && renderStats()}
+        <PrayerTimes city={settings.city} day={selectedDay} />
         {activeTab === 'settings' && renderSettings()}
+        {activeTab === 'courses' && (
+          <div className="p-4 pb-24">
+            {SESSIONS.length > 0 ? (
+              SESSIONS.map((session) => (
+                <div key={session.id} className="bg-white rounded-3xl p-5 mb-4 shadow-sm border-2 border-slate-100">
+                  {session.image && (
+                    <img
+                      src={session.image}
+                      alt={session.title}
+                      className="w-full h-48 object-cover rounded-2xl mb-4"
+                    />
+                  )}
+                  <div className="flex items-start gap-4">
+                    <div className="text-3xl w-14 h-14 flex items-center justify-center rounded-2xl bg-emerald-50 shrink-0">
+                      {session.icon ?? '📚'}
+                    </div>
+                    <div className="flex-1">
+                      <h3 className="font-bold text-base text-slate-800">{session.title}</h3>
+                      <p className="text-xs text-emerald-600 mt-1 font-bold">{session.description}</p>
+                    </div>
+                  </div>
+                  <div className="mt-4 space-y-2 text-sm text-slate-600">
+                    <p className="flex items-start gap-2">
+                      <span className="text-slate-400">👤</span>
+                      <span>{session.teachers}</span>
+                    </p>
+                    <p className="flex items-start gap-2">
+                      <span className="text-slate-400">🕐</span>
+                      <span>{session.time}</span>
+                    </p>
+                    <p className="flex items-start gap-2">
+                      <span className="text-slate-400">📍</span>
+                      <span>{session.location}</span>
+                    </p>
+                    <p className="flex items-start gap-2">
+                      <span className="text-slate-400">📞</span>
+                      <span className="whitespace-pre-line">{session.contact}</span>
+                    </p>
+                  </div>
+                  {session.url && (
+                    <a
+                      href={session.url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="mt-4 w-full py-3 rounded-2xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-center block transition-colors"
+                    >
+                      مشاهده کانال ✅
+                    </a>
+                  )}
+                </div>
+              ))
+            ) : (
+              <div className="flex flex-col items-center justify-center min-h-[50vh]">
+                <BookOpenIcon className="w-16 h-16 text-slate-300 mb-4" />
+                <p className="text-slate-500 font-bold text-lg">جلسه‌ای اضافه نشده</p>
+              </div>
+            )}
+          </div>
+        )}
       </main>
       {showIntro && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-6 bg-emerald-950/40 backdrop-blur-sm animate-fadeIn">
@@ -684,7 +717,10 @@ const App: React.FC = () => {
         </div>
       )}
       <nav className="fixed bottom-0 left-0 right-0 max-w-md mx-auto bg-white/90 backdrop-blur-lg border-t border-slate-100 flex justify-around p-4 z-50 rounded-t-[2.5rem] shadow-[0_-10px_30px_rgba(0,0,0,0.03)]">
-        <button onClick={() => setActiveTab('today')} className={`flex flex-col items-center p-2 rounded-2xl transition-all ${activeTab === 'today' ? 'text-emerald-600' : 'text-slate-400'}`}>
+        <button
+          onClick={() => setActiveTab('today')}
+          className={`flex flex-col items-center p-2 rounded-2xl transition-all ${activeTab === 'today' ? 'text-emerald-600' : 'text-slate-400'}`}
+        >
           <CheckCircleIcon className={`w-6 h-6 ${activeTab === 'today' ? 'stroke-[2.5px]' : ''}`} />
           <span className="text-[10px] mt-1.5 font-black">امروز</span>
           {activeTab === 'today' && <div className="w-1 h-1 bg-emerald-600 rounded-full mt-1" />}
@@ -693,6 +729,11 @@ const App: React.FC = () => {
           <CalendarIcon className={`w-6 h-6 ${activeTab === 'calendar' ? 'stroke-[2.5px]' : ''}`} />
           <span className="text-[10px] mt-1.5 font-black">تقویم</span>
           {activeTab === 'calendar' && <div className="w-1 h-1 bg-emerald-600 rounded-full mt-1" />}
+        </button>
+        <button onClick={() => setActiveTab('courses')} className={`flex flex-col items-center p-2 rounded-2xl transition-all ${activeTab === 'courses' ? 'text-emerald-600' : 'text-slate-400'}`}>
+          <BookOpenIcon className={`w-6 h-6 ${activeTab === 'courses' ? 'stroke-[2.5px]' : ''}`} />
+          <span className="text-[10px] mt-1.5 font-black">جلسات</span>
+          {activeTab === 'courses' && <div className="w-1 h-1 bg-emerald-600 rounded-full mt-1" />}
         </button>
         <button onClick={() => setActiveTab('stats')} className={`flex flex-col items-center p-2 rounded-2xl transition-all ${activeTab === 'stats' ? 'text-emerald-600' : 'text-slate-400'}`}>
           <ChartBarIcon className={`w-6 h-6 ${activeTab === 'stats' ? 'stroke-[2.5px]' : ''}`} />

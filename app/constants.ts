@@ -1,4 +1,4 @@
-import { Task, RamadanDay } from './types';
+import { Task, RamadanDay, Session, City } from './types';
 
 /** Minimum id for user-created daily tasks (avoids clash with built-in task ids). */
 export const CUSTOM_TASK_ID_START = 1000;
@@ -62,4 +62,47 @@ export const RAMADAN_DAYS: RamadanDay[] = [
   { dayIndex: 28, weekday: 'چهارشنبه', hijriDate: 28, solarDate: '27 اسفند' },
   { dayIndex: 29, weekday: 'پنجشنبه', hijriDate: 29, solarDate: '28 اسفند' },
   { dayIndex: 30, weekday: 'جمعه', hijriDate: 30, solarDate: '29 اسفند', event: 'شب عید فطر' },
+];
+
+export const SESSIONS: Session[] = [
+  {
+    id: 1,
+    title: 'چهارمین دوره معرفتی قرآنی ملکوت',
+    description: '«بازخوانی معارف قرآن برای زندگی دینی»',
+    teachers: 'آیت الله #تحریری و حجج اسلام #حاج_ابوالقاسم، #امینی_خواه، #علوی، #صبوحی، #انصاریان و ...',
+    time: 'ساعت ۱۴:۳۰ الی ۱۵:۳۰ و ۲۲ الی ۲۳',
+    location: 'به صورت مجازی در اسکای روم',
+    contact: 'شماره تماس: ۰۹۹۶۱۷۲۱۶۵۶\\nنام کاربری: @admin_imam_alrahmah',
+    url: 'https://ble.ir/imam_alrahmah',
+    icon: '❇️',
+    image: '/malakoot.jpg',
+  },
+];
+
+export const CITIES: City[] = [
+  { id: 'tehran', name: 'تهران' },
+  { id: 'mashhad', name: 'مشهد' },
+  { id: 'isfahan', name: 'اصفهان' },
+  { id: 'shiraz', name: 'شیراز' },
+  { id: 'tabriz', name: 'تبریز' },
+  { id: 'karaj', name: 'کرج' },
+  { id: 'qom', name: 'قم' },
+  { id: 'ahvaz', name: 'اهواز' },
+  { id: 'kerman', name: 'کرمان' },
+  { id: 'rasht', name: 'رشت' },
+  { id: 'zanjan', name: 'زنجان' },
+  { id: 'hamadan', name: 'همدان' },
+  { id: 'kermanshah', name: 'کرمانشاه' },
+  { id: 'sari', name: 'ساری' },
+  { id: 'gorgan', name: 'گرگان' },
+  { id: 'yazd', name: 'یزد' },
+  { id: 'kashan', name: 'کاشان' },
+  { id: 'ardabil', name: 'اردبیل' },
+  { id: 'qazvin', name: 'قزوین' },
+  { id: 'lorestan', name: 'لرستان' },
+  { id: 'bushehr', name: 'بوشهر' },
+  { id: 'kohgiluyeh', name: 'کهگیلویه و بویراحمد' },
+  { id: 'zabol', name: 'زابل' },
+  { id: 'sabzevar', name: 'سبزوار' },
+  { id: 'neyshabur', name: 'نیشابور' },
 ];
