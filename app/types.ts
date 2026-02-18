@@ -3,6 +3,8 @@ export interface Task {
   title: string;
   description?: string;
   url?: string;
+  /** One URL per Ramadan day (1–30); used when present instead of url. */
+  urlByDay?: string[];
   icon?: string;
 }
 

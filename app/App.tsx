@@ -13,14 +13,17 @@ import {
   ArrowPathIcon,
   InformationCircleIcon,
   SparklesIcon,
+  ChevronLeftIcon,
+  ChevronRightIcon,
 } from '@heroicons/react/24/outline';
 import { CheckCircleIcon as CheckCircleSolid } from '@heroicons/react/24/solid';
+import { getTodayRamadanDay } from './dateUtils';
 
 const STORAGE_KEY = 'ramadan_muraqabah_v3';
 
 const App: React.FC = () => {
   const [activeTab, setActiveTab] = useState<'today' | 'calendar' | 'stats' | 'settings'>('today');
-  const [selectedDay, setSelectedDay] = useState<number>(1);
+  const [selectedDay, setSelectedDay] = useState<number>(() => getTodayRamadanDay() ?? 1);
   const [userProfile, setUserProfile] = useState<UserProfile>({ name: 'کاربر گرامی', joinedAt: new Date().toISOString() });
   const [showIntro, setShowIntro] = useState(false);
   const [progress, setProgress] = useState<UserProgress>({});
@@ -28,6 +31,14 @@ const App: React.FC = () => {
     remindersEnabled: false,
     notificationTime: '18:00',
   });
+  const [showNamePopup, setShowNamePopup] = useState(false);
+  const [nameDraft, setNameDraft] = useState('');
+
+  const todayRamadanDay = getTodayRamadanDay();
+
+  useEffect(() => {
+    if (showNamePopup) setNameDraft(userProfile.name);
+  }, [showNamePopup, userProfile.name]);
 
   useEffect(() => {
     const savedData = localStorage.getItem(STORAGE_KEY);
@@ -94,27 +105,55 @@ const App: React.FC = () => {
         <div className="absolute -bottom-8 -right-8 w-32 h-32 bg-amber-400/10 rounded-full blur-2xl" />
         <div className="relative z-10">
           <div className="flex justify-between items-start mb-6">
-            <div className="flex items-center gap-3">
+            <button
+              type="button"
+              onClick={() => setShowNamePopup(true)}
+              className="flex items-center gap-3 rounded-2xl p-1 -m-1 hover:bg-white/10 transition-colors"
+              aria-label="تغییر نام"
+            >
               <div className="w-10 h-10 bg-white/20 rounded-full flex items-center justify-center border border-white/20 backdrop-blur-md">
                 <UserIcon className="w-6 h-6" />
               </div>
               <span className="font-bold text-emerald-50">{userProfile.name}</span>
-            </div>
+            </button>
             <div className="bg-white/20 px-3 py-1 rounded-full backdrop-blur-md text-xs border border-white/20">
               {currentDayData?.solarDate}
             </div>
           </div>
-          <div className="flex justify-between items-end">
-            <div>
-              <h1 className="text-3xl font-black flex items-center gap-2">
+          <div className="flex justify-between items-end gap-3">
+            <div className="flex items-center gap-2 shrink-0">
+              <button
+                type="button"
+                onClick={() => setSelectedDay(d => (d === 1 ? 30 : d - 1))}
+                className="w-10 h-10 rounded-xl bg-white/20 hover:bg-white/30 flex items-center justify-center border border-white/20 transition-colors"
+                title={selectedDay === 1 ? '۲۹ شعبان' : `روز قبل (${selectedDay - 1} رمضان)`}
+                aria-label={selectedDay === 1 ? '۲۹ شعبان' : `روز ${selectedDay - 1} رمضان`}
+              >
+                <ChevronRightIcon className="w-6 h-6" />
+              </button>
+              <button
+                type="button"
+                onClick={() => setSelectedDay(d => (d === 30 ? 1 : d + 1))}
+                className="w-10 h-10 rounded-xl bg-white/20 hover:bg-white/30 flex items-center justify-center border border-white/20 transition-colors"
+                title={selectedDay === 30 ? '۱ شوال' : `روز بعد (${selectedDay + 1} رمضان)`}
+                aria-label={selectedDay === 30 ? '۱ شوال' : `روز ${selectedDay + 1} رمضان`}
+              >
+                <ChevronLeftIcon className="w-6 h-6" />
+              </button>
+            </div>
+            <div className="min-w-0 flex-1">
+              <h1 className="text-3xl font-black flex items-center gap-2 flex-wrap">
                 روز {selectedDay} رمضان
                 {selectedDay === 1 && <SparklesIcon className="w-6 h-6 text-amber-300" />}
               </h1>
-              <p className="text-emerald-100 mt-1">{currentDayData?.weekday} الکریم</p>
+              <p className="text-emerald-100 mt-1">{currentDayData?.weekday}</p>
+              {todayRamadanDay == null && (
+                <p className="text-amber-200/90 text-sm mt-1 font-medium">آمادگی برای ماه رمضان</p>
+              )}
             </div>
-            <div className="bg-white text-emerald-600 w-16 h-16 rounded-2xl flex flex-col items-center justify-center shadow-lg ring-4 ring-emerald-500/30">
-              <span className="text-xl font-black leading-none">{progressPercent}</span>
-              <span className="text-[10px] font-bold">%</span>
+            <div className="bg-white text-emerald-600 w-20 h-20 rounded-2xl flex flex-row items-center justify-center gap-0.5 shadow-lg ring-4 ring-emerald-500/30 shrink-0">
+              <span className="text-2xl font-black leading-none">{progressPercent}</span>
+              <span className="text-sm font-bold">%</span>
             </div>
           </div>
         </div>
@@ -128,7 +167,7 @@ const App: React.FC = () => {
       <div className="px-4 pb-24 space-y-4">
         {TASKS.map(task => {
           const isCompleted = (progress[selectedDay] as number[] || []).includes(task.id);
-          let taskUrl = task.url;
+          let taskUrl = task.urlByDay ? task.urlByDay[selectedDay - 1] : task.url;
           if (task.id === 1) taskUrl = `https://tanzil.net/#juz-${selectedDay}`;
           return (
             <div
@@ -187,7 +226,7 @@ const App: React.FC = () => {
               key={day.dayIndex}
               onClick={() => { setSelectedDay(day.dayIndex); setActiveTab('today'); }}
               className={`flex flex-col items-center justify-center aspect-square rounded-[1.5rem] transition-all relative ${isSelected ? 'bg-emerald-600 text-white shadow-lg shadow-emerald-200 ring-4 ring-emerald-100'
-                  : dayProg > 0 ? 'bg-emerald-50 text-emerald-800 border border-emerald-100' : 'bg-white border border-slate-100 text-slate-400'
+                : dayProg > 0 ? 'bg-emerald-50 text-emerald-800 border border-emerald-100' : 'bg-white border border-slate-100 text-slate-400'
                 }`}
             >
               <span className="text-lg font-black">{day.dayIndex}</span>
@@ -336,6 +375,51 @@ const App: React.FC = () => {
               </div>
               <button onClick={closeIntro} className="w-full py-4 bg-emerald-600 hover:bg-emerald-700 text-white font-black rounded-2xl shadow-lg shadow-emerald-900/20 transition-all active:scale-95">
                 متوجه شدم
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+      {showNamePopup && (
+        <div
+          className="fixed inset-0 z-[100] flex items-center justify-center p-6 bg-slate-900/50 backdrop-blur-sm animate-fadeIn"
+          onClick={() => setShowNamePopup(false)}
+          role="dialog"
+          aria-modal="true"
+          aria-label="ویرایش نام"
+        >
+          <div
+            className="bg-white rounded-[2.5rem] p-6 w-full max-w-sm shadow-2xl relative overflow-hidden border border-slate-100"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="absolute top-0 left-0 right-0 h-2 bg-emerald-500" />
+            <h3 className="text-lg font-black text-slate-800 mb-4">نام شما</h3>
+            <input
+              type="text"
+              value={nameDraft}
+              onChange={(e) => setNameDraft(e.target.value)}
+              placeholder="نام خود را وارد کنید"
+              className="w-full px-4 py-3 rounded-2xl border-2 border-slate-200 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-200 outline-none text-slate-800 font-medium"
+              dir="rtl"
+              autoFocus
+            />
+            <div className="flex gap-3 mt-6">
+              <button
+                type="button"
+                onClick={() => setShowNamePopup(false)}
+                className="flex-1 py-3 rounded-2xl border-2 border-slate-200 text-slate-600 font-bold hover:bg-slate-50 transition-colors"
+              >
+                انصراف
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setUserProfile(p => ({ ...p, name: nameDraft.trim() || 'کاربر گرامی' }));
+                  setShowNamePopup(false);
+                }}
+                className="flex-1 py-3 rounded-2xl bg-emerald-600 hover:bg-emerald-700 text-white font-black transition-colors"
+              >
+                ذخیره
               </button>
             </div>
           </div>

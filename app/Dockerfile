@@ -9,17 +9,18 @@ RUN bun install
 COPY . .
 RUN bun run build
 
-# Production stage: serve static files only (no node_modules needed)
-FROM oven/bun:1-alpine
+# Production stage: serve static files with nginx
+FROM nginx:alpine
 
-WORKDIR /app
+# Remove default nginx config
+RUN rm /etc/nginx/conf.d/default.conf
 
-COPY --from=builder /app/dist ./dist
-COPY --from=builder /app/serve.ts ./
-COPY --from=builder /app/package.json ./
+# Copy custom nginx config
+COPY nginx.conf /etc/nginx/conf.d/
 
-ENV NODE_ENV=production
-ENV PORT=3000
-EXPOSE 3000
+# Copy built static files from builder
+COPY --from=builder /app/dist /usr/share/nginx/html
 
-CMD ["bun", "./serve.ts"]
+EXPOSE 80
+
+CMD ["nginx", "-g", "daemon off;"]
