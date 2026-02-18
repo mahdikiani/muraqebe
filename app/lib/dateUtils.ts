@@ -39,6 +39,43 @@ export function g2j(gy: number, gm: number, gd: number): JDate {
   return { jy, jm, jd };
 }
 
+/** Jalali (Shamsi) to Gregorian. From jalaali-js. */
+export function j2g(jy: number, jm: number, jd: number): { gy: number; gm: number; gd: number } {
+  const sal_a = jy > 979 ? jy - 979 : jy - 621;
+  let days =
+    365 * sal_a +
+    Math.floor(sal_a / 33) * 8 +
+    Math.floor(((sal_a % 33) + 3) / 4) +
+    78 +
+    (jm < 7 ? (jm - 1) * 31 : (jm - 7) * 30 + 186) +
+    jd;
+  let gy = 1600 + 400 * Math.floor(days / 146097);
+  days %= 146097;
+  if (days >= 36525) {
+    gy += 100 * Math.floor((days - 1) / 36525);
+    days = (days - 1) % 36525;
+  }
+  gy += 4 * Math.floor(days / 1461);
+  days %= 1461;
+  if (days > 365) {
+    gy += Math.floor((days - 1) / 365);
+    days = (days - 1) % 365;
+  }
+  const gm = days < 186 ? 1 + Math.floor(days / 31) : 7 + Math.floor((days - 186) / 30);
+  const gd = 1 + (days < 186 ? days % 31 : (days - 186) % 30);
+  return { gy, gm, gd };
+}
+
+/** Unix timestamp (seconds) for the start of the given Ramadan day (1–30) in local time. Uses current Jalali year. */
+export function getRamadanDayTimestamp(dayIndex: number): number {
+  const now = new Date();
+  const { jy } = g2j(now.getFullYear(), now.getMonth() + 1, now.getDate());
+  const jm = dayIndex === 1 ? 11 : 12;
+  const jd = dayIndex === 1 ? 30 : dayIndex - 1;
+  const { gy, gm, gd } = j2g(jy, jm, jd);
+  const date = new Date(gy, gm - 1, gd);
+  return Math.floor(date.getTime() / 1000);
+}
 
 /** Returns Ramadan day index 1–30 if today is in the Ramadan window (30 Bahman – 29 Esfand), else null. */
 export function getTodayRamadanDay(): number | null {
