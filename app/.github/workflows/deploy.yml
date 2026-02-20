@@ -24,12 +24,12 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: "20"
-          cache: "npm"
 
-      - name: Clean install
+      - name: Install dependencies
         run: |
           rm -rf node_modules package-lock.json
-          npm ci
+          npm install
+          npm install @rollup/rollup-linux-x64-gnu
 
       - name: Build
         run: npm run build
