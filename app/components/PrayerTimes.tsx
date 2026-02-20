@@ -1,47 +1,21 @@
 import React, { useState, useEffect } from 'react';
 import { PrayerTimes as PrayerTimesType } from '@/types';
 import { getRamadanDayTimestamp } from '@/lib/dateUtils';
+import { CITIES } from '@/constants';
 
-interface PrayerTimesProps {
-    city: string;
-    day: number;
+export interface PrayerTimesProps {
+  city: string;
+  day: number;
+  /** 'card' = today header card, 'strip' = compact strip. */
+  variant?: 'card' | 'strip';
 }
 
-// one-api.ir owghat: city id -> Persian name for API
-const CITY_NAMES: { [key: string]: string } = {
-    tehran: 'تهران',
-    isfahan: 'اصفهان',
-    urumiyeh: 'ارومیه',
-    arak: 'اراک',
-    ahvaz: 'اهواز',
-    tabriz: 'تبریز',
-    bandarabbas: 'بندرعباس',
-    shiraz: 'شیراز',
-    karaj: 'کرج',
-    qazvin: 'قزوین',
-    qom: 'قم',
-    zahedan: 'زاهدان',
-    mashhad: 'مشهد',
-    yazd: 'یزد',
-    bojnourd: 'بجنورد',
-    rasht: 'رشت',
-    sari: 'ساری',
-    gorgan: 'گرگان',
-    kerman: 'کرمان',
-    bushehr: 'بوشهر',
-    kermanshah: 'کرمانشاه',
-    sanandaj: 'سنندج',
-    mahabad: 'مهاباد',
-    hamedan: 'همدان',
-    zanjan: 'زنجان',
-    ardabil: 'اردبیل',
-    semnan: 'سمنان',
-    ilam: 'ایلام',
-    shahrekord: 'شهرکرد',
-    yasuj: 'یاسوج',
-};
-
 const OWGHAT_TOKEN = '500847:6995f3ac53687';
+
+function getCityNameById(id: string): string {
+  const found = CITIES.find((c) => c.id === id);
+  return found?.name ?? 'تهران';
+}
 
 interface OneApiOwghatResult {
     city: string;
@@ -79,7 +53,7 @@ const PrayerTimes: React.FC<PrayerTimesProps> = ({ city, day, variant = 'card' }
             setError(null);
 
             try {
-                const cityName = CITY_NAMES[city] || 'تهران';
+                const cityName = getCityNameById(city);
                 const timestamp = getRamadanDayTimestamp(day);
                 const url = `https://one-api.ir/owghat/?action=timestamp&token=${encodeURIComponent(OWGHAT_TOKEN)}&city=${encodeURIComponent(cityName)}&timestamp=${timestamp}&en_num=true`;
                 const response = await fetch(url);

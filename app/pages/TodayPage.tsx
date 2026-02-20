@@ -1,17 +1,15 @@
 import React from 'react';
 import {
-    UserIcon,
-    ChevronRightIcon,
-    ChevronLeftIcon,
-    SparklesIcon,
-    ExclamationCircleIcon,
-    PlusCircleIcon,
-    InformationCircleIcon,
+  ChevronRightIcon,
+  ChevronLeftIcon,
+  SparklesIcon,
+  ExclamationCircleIcon,
+  PlusCircleIcon,
 } from '@heroicons/react/24/outline';
 import TaskCard from '@/components/TaskCard';
 import PrayerTimes from '@/components/PrayerTimes';
 import { Task, UserProgress, UserProfile, CustomTask, RamadanDay } from '@/types';
-import { getRamadanStatus, getTodaySolarDateString, getDaysUntilRamadan, getTodayWeekdayPersian } from '@/lib/dateUtils';
+import { getTodaySolarDateString } from '@/lib/dateUtils';
 import { CUSTOM_TASK_ID_START } from '@/constants';
 
 export interface TodayPageProps {

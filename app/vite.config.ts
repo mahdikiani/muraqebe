@@ -4,6 +4,7 @@ import react from '@vitejs/plugin-react';
 import { VitePWA } from 'vite-plugin-pwa';
 
 export default defineConfig({
+  base: process.env.BASE_PATH || '/',
   server: {
     port: 3000,
     host: '0.0.0.0',
@@ -25,7 +26,7 @@ export default defineConfig({
         background_color: '#f8fafc',
         display: 'standalone',
         orientation: 'portrait',
-        start_url: '/',
+        start_url: (process.env.BASE_PATH || '/').replace(/\/?$/, '/'),
         lang: 'fa',
         dir: 'rtl',
         icons: [

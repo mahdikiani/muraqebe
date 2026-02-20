@@ -1,0 +1,131 @@
+---
+description: 
+alwaysApply: true
+---
+
+# 📚 Introduction
+
+## What is a Monorepo?
+
+A monorepo (monolithic repository) is a version-controlled code repository that holds multiple projects. While these projects may be related, they are often logically independent and run by different teams. Companies like Google, Facebook, and Twitter use monorepos to manage large-scale systems. [Source](https://semaphoreci.com/blog/what-is-monorepo)
+
+## What is Turborepo?
+
+Turborepo is a high-performance build system for JavaScript and TypeScript monorepos. It offers features like fast incremental builds, local and remote caching, and task orchestration, making it easier to manage and scale monorepos effectively. [Source](https://refine.dev/blog/how-to-use-turborepo/)
+
+---
+
+# 🧭 General Guidelines
+
+- Use Material-UI (MUI) components for all UI elements.
+- Import MUI components from `@mui/material` and icons from `@ice/icons`.
+- Apply consistent theming using the shared theme in `packages/theme`.
+- Utilize shared utilities from `packages/utils` to avoid code duplication.
+
+# 📦 Monorepo Structure
+
+## Packages (Shared)
+
+These shared packages provide utilities, components, and configurations for all apps:
+
+- **@ice/api**: Shared API utilities and configurations
+    - Location: `packages/api/`
+    - Use for: API client configurations, request/response handling
+
+- **@ice/config**: Centralized API configuration with environment support
+    - Location: `packages/config/`
+    - Use for: Environment variables, API endpoints configuration
+
+- **@ice/fonts**: Custom fonts including Vazirmatn
+    - Location: `packages/fonts/`
+    - Use for: Typography and font management
+
+- **@ice/icons**: Font Awesome icons for MUI
+    - Location: `packages/icons/`
+    - Use for: Icon components and utilities
+
+- **@ice/middleware**: Authentication and request middleware components
+    - Location: `packages/middleware/`
+    - Use for: Auth guards, request interceptors
+
+- **@ice/theme**: Shared MUI theme and settings
+    - Location: `packages/theme/`
+    - Use for: Consistent theming across all apps
+
+- **@ice/ui**: Reusable React UI components (MUI-based, atomic design)
+    - Location: `packages/ui/`
+    - Use for: Shared components (atoms, molecules, organisms)
+
+- **@ice/utils**: Shared utility functions
+    - Location: `packages/utils/`
+    - Use for: Common helper functions, formatters, validators
+
+## API Clients (OpenAPI-generated)
+
+These TypeScript clients are generated from OpenAPI specifications:
+
+- **@ice/auction**: Auction API client
+- **@ice/cds**: CDS API client
+- **@ice/collection**: Collection API client
+- **@ice/exchange**: Exchange API client
+- **@ice/ipg**: IPG API client
+- **@ice/media**: Media API client
+- **@ice/smpq**: SMPQ API client
+- **@ice/usso**: USSO API client
+- **@ice/wallet**: Wallet API client
+
+Clients are generated and updated via `bun run clients`.
+
+---
+
+# 🧱 Component Development
+
+- Place reusable components in `packages/ui` and import them into `apps/*` as needed.
+- Follow the atomic design methodology: atoms, molecules, organisms, templates, pages.
+- Ensure components are responsive and adhere to accessibility standards.
+
+# ⚛️ State Management and Hooks
+
+- Use React hooks for state management within components.
+- Place custom hooks in `apps/*/hooks` and name them with the `use` prefix.
+- Avoid using external state management libraries unless necessary.
+
+# 🧭 Routing and Pages
+
+- Define routes in `apps/*/app` using Next.js conventions.
+- Use dynamic routing for pages that require parameters.
+
+# 🎨 Styling
+
+- Use MUI's `sx` prop for styling components.
+- Avoid using external CSS files; prefer inline styles or styled components from MUI.
+
+# 🧪 Testing
+
+- Write unit tests for components using Jest and React Testing Library.
+- Place test files alongside the components with a `.test.tsx` extension.
+
+# 📁 File and Folder Naming
+
+- Use kebab-case for file and folder names.
+- Name React components with PascalCase.
+
+# 📦 Dependencies
+- Manage dependencies at the root `package.json` level when possible.
+- Use Turborepo's caching and build pipelines to optimize development workflow.
+
+# 🛠 Tooling & Conventions
+
+- **Bun**: All scripts and package management use Bun. Do _not_ use npm, pnpm, or yarn.
+- **Turborepo**: Fast builds, caching, and task orchestration.
+- **Material-UI**: All UI uses MUI components and theming.
+- **Atomic Design**: UI components are organized as atoms, molecules, organisms, templates, and pages.
+- **Testing**: Use Jest and React Testing Library. Test files: `*.test.tsx` next to components.
+- **Linting & Formatting**: ESLint and Prettier are configured. Run `bun run lint` and `bun run fm:check` in each app/package.
+
+# 📝 Additional Notes
+
+- Refer to the README files in each package for specific guidelines.
+- Keep the codebase clean and well-documented to facilitate collaboration.
+- Use shared packages from `packages/` to avoid code duplication.
+- Import API clients from `clients/` for type-safe API interactions.
